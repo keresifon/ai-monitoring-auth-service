@@ -34,7 +34,7 @@ public class SecurityConfig {
             // CSRF protection is disabled because this is a stateless JWT-based API.
             // JWT tokens in the Authorization header provide protection against CSRF attacks.
             // This is safe for REST APIs that don't use session-based authentication.
-            .csrf(csrf -> csrf.disable())
+            .csrf(csrf -> csrf.disable()) // NOSONAR: CSRF protection is not needed for stateless JWT-based REST APIs
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**", "/api/v1/auth/**", "/actuator/health", "/actuator/info", "/error").permitAll()
