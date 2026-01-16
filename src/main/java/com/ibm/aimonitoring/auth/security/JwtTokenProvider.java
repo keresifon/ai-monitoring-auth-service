@@ -34,10 +34,10 @@ public class JwtTokenProvider {
                 .collect(Collectors.joining(","));
 
         return Jwts.builder()
-                .setSubject(username)
+                .subject(username)
                 .claim("roles", roles)
-                .setIssuedAt(now)
-                .setExpiration(expiryDate)
+                .issuedAt(now)
+                .expiration(expiryDate)
                 .signWith(getSigningKey())
                 .compact();
     }
@@ -50,11 +50,11 @@ public class JwtTokenProvider {
         String roles = String.join(",", user.getRoles());
 
         return Jwts.builder()
-                .setSubject(username)
+                .subject(username)
                 .claim("userId", user.getId().toString())
                 .claim("roles", roles)
-                .setIssuedAt(now)
-                .setExpiration(expiryDate)
+                .issuedAt(now)
+                .expiration(expiryDate)
                 .signWith(getSigningKey())
                 .compact();
     }
