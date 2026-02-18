@@ -31,10 +31,10 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            // CSRF protection is disabled because this is a stateless JWT-based API.
-            // JWT tokens in the Authorization header provide protection against CSRF attacks.
-            // This is safe for REST APIs that don't use session-based authentication.
-            .csrf(csrf -> csrf.disable()) // NOSONAR: CSRF protection is not needed for stateless JWT-based REST APIs
+            // Stateless JWT API: CSRF only ignored for API/actuator endpoints (no cookie-based auth)
+            .csrf(csrf -> csrf
+                .ignoringRequestMatchers("/api/**", "/api/v1/**", "/actuator/**", "/error")
+            )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**", "/api/v1/auth/**", "/actuator/health", "/actuator/info", "/error").permitAll()
