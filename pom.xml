@@ -8,7 +8,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.1</version>
+        <version>3.4.13</version>
         <relativePath/>
     </parent>
 
@@ -21,6 +21,11 @@
     <properties>
         <java.version>17</java.version>
         <jjwt.version>0.12.3</jjwt.version>
+        <commons-lang3.version>3.18.0</commons-lang3.version>
+        <log4j.version>2.25.0</log4j.version>
+        <netty.version>4.1.131.Final</netty.version>
+        <logback.version>1.5.25</logback.version>
+        <tomcat.version>10.1.52</tomcat.version>
         <sonar.organization>keresifon</sonar.organization>
         <sonar.projectKey>keresifon_ai-monitoring-auth-service</sonar.projectKey>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
@@ -34,6 +39,39 @@
         </sonar.coverage.exclusions>
     </properties>
 
+    <dependencyManagement>
+        <dependencies>
+            <!-- Override parsson to fix CVE-2023-4043, CVE-2023-7272 -->
+            <dependency>
+                <groupId>org.eclipse.parsson</groupId>
+                <artifactId>parsson</artifactId>
+                <version>1.1.5</version>
+            </dependency>
+            <!-- Override commons-lang3 to fix CVE-2025-48924 -->
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>${commons-lang3.version}</version>
+            </dependency>
+            <!-- Override log4j to fix CVE-2025-68161 -->
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-bom</artifactId>
+                <version>${log4j.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- Override netty to fix CVE-2025-55163, CVE-2025-24970, CVE-2025-58057, CVE-2025-67735, CVE-2025-25193, CVE-2025-58056 -->
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-bom</artifactId>
+                <version>${netty.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+    
     <dependencies>
         <!-- Spring Boot Starters -->
         <dependency>
@@ -160,6 +198,30 @@
                 <groupId>org.sonarsource.scanner.maven</groupId>
                 <artifactId>sonar-maven-plugin</artifactId>
                 <version>3.10.0.2594</version>
+            </plugin>
+
+            <!-- OWASP Dependency-Check for CVE detection -->
+            <plugin>
+                <groupId>org.owasp</groupId>
+                <artifactId>dependency-check-maven</artifactId>
+                <version>12.2.0</version>
+                <configuration>
+                    <failBuildOnCVSS>7</failBuildOnCVSS>
+                    <nvdApiKey>${env.NVD_API_KEY}</nvdApiKey>
+                    <suppressionFiles>
+                        <suppressionFile>dependency-check-suppression.xml</suppressionFile>
+                    </suppressionFiles>
+                    <skipNvdUpdate>false</skipNvdUpdate>
+                    <cveValidForHours>24</cveValidForHours>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <phase>verify</phase>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
