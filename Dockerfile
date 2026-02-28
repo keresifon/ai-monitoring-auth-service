@@ -6,9 +6,8 @@ RUN apk update && apk upgrade
 
 WORKDIR /app
 
-# Copy pom.xml, suppression file, and download dependencies (cached layer)
+# Copy pom.xml and download dependencies (cached layer)
 COPY pom.xml .
-COPY dependency-check-suppression.xml .
 RUN mvn dependency:go-offline -B
 
 # Copy source code and build
