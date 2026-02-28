@@ -2,10 +2,14 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "auth-service.fullname" . }}
+  namespace: ai-monitoring
   labels:
     {{- include "auth-service.labels" . | nindent 4 }}
+    tier: auth
 spec:
+  {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
+  {{- end }}
   selector:
     matchLabels:
       {{- include "auth-service.selectorLabels" . | nindent 6 }}
@@ -13,6 +17,7 @@ spec:
     metadata:
       labels:
         {{- include "auth-service.selectorLabels" . | nindent 8 }}
+        tier: auth
     spec:
       serviceAccountName: {{ include "auth-service.serviceAccountName" . }}
       containers:
@@ -31,23 +36,25 @@ spec:
             - name: DB_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "auth-service.fullname" . }}-secrets
+                  name: {{ .Values.secrets.commonSecretName }}
                   key: db-username
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "auth-service.fullname" . }}-secrets
+                  name: {{ .Values.secrets.commonSecretName }}
                   key: db-password
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "auth-service.fullname" . }}-secrets
+                  name: {{ .Values.secrets.commonSecretName }}
                   key: jwt-secret
             - name: CORS_ALLOWED_ORIGINS
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "auth-service.fullname" . }}-secrets
+                  name: {{ .Values.secrets.commonSecretName }}
                   key: cors-allowed-origins
+          startupProbe:
+            {{- toYaml .Values.startupProbe | nindent 12 }}
           livenessProbe:
             {{- toYaml .Values.livenessProbe | nindent 12 }}
           readinessProbe:

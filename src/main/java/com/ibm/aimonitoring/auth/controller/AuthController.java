@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
+// CORS is configured globally in SecurityConfig, so no need for permissive @CrossOrigin here
 public class AuthController {
 
     private final AuthService authService;

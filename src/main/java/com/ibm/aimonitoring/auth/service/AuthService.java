@@ -1,6 +1,7 @@
 package com.ibm.aimonitoring.auth.service;
 
 import com.ibm.aimonitoring.auth.dto.*;
+import com.ibm.aimonitoring.auth.exception.*;
 import com.ibm.aimonitoring.auth.model.RefreshToken;
 import com.ibm.aimonitoring.auth.model.User;
 import com.ibm.aimonitoring.auth.repository.RefreshTokenRepository;
@@ -45,11 +46,11 @@ public class AuthService {
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByUsername(request.getUsername())) {
-            throw new RuntimeException("Username already exists");
+            throw new UsernameAlreadyExistsException("Username already exists");
         }
 
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already exists");
+            throw new EmailAlreadyExistsException("Email already exists");
         }
 
         User user = new User();
@@ -81,7 +82,7 @@ public class AuthService {
         );
 
         User user = userRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
 
         user.setLastLogin(LocalDateTime.now());
         userRepository.save(user);
@@ -95,11 +96,11 @@ public class AuthService {
     @Transactional
     public AuthResponse refreshToken(String refreshTokenStr) {
         RefreshToken refreshToken = refreshTokenRepository.findByToken(refreshTokenStr)
-                .orElseThrow(() -> new RuntimeException("Invalid refresh token"));
+                .orElseThrow(() -> new InvalidRefreshTokenException("Invalid refresh token"));
 
         if (refreshToken.getExpiryDate().isBefore(LocalDateTime.now())) {
             refreshTokenRepository.delete(refreshToken);
-            throw new RuntimeException("Refresh token expired");
+            throw new RefreshTokenExpiredException("Refresh token expired");
         }
 
         User user = refreshToken.getUser();
