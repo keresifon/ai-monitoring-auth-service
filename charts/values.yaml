@@ -26,6 +26,12 @@ resources:
     cpu: 100m
     memory: 256Mi
 
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+
 env:
   SPRING_PROFILES_ACTIVE: kubernetes
 
@@ -35,22 +41,33 @@ database:
   name: ai_monitoring
   schema: auth_service
 
+# Secret name for DB/JWT credentials (from install-dependencies.sh)
 secrets:
-  dbUsername: ""
-  dbPassword: ""
-  jwtSecret: ""
-  corsAllowedOrigins: "https://ai-monitoring.example.com"
+  commonSecretName: ai-monitoring-secrets
+
+startupProbe:
+  httpGet:
+    path: /actuator/health/liveness
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 24
 
 livenessProbe:
   httpGet:
     path: /actuator/health/liveness
     port: http
-  initialDelaySeconds: 60
-  periodSeconds: 10
+  initialDelaySeconds: 0
+  periodSeconds: 15
+  timeoutSeconds: 10
+  failureThreshold: 5
 
 readinessProbe:
   httpGet:
     path: /actuator/health/readiness
     port: http
-  initialDelaySeconds: 30
-  periodSeconds: 5
+  initialDelaySeconds: 60
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6

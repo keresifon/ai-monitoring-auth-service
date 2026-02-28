@@ -222,31 +222,88 @@ jobs:
           sarif_file: 'trivy-results.sarif'
           category: 'trivy-container'
 
-  # Deploys to Kubernetes on main branch push (uses values.yaml tag)
+  # Deploys to AKS on main branch push (uses values.yaml tag)
   deploy:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Set up Helm
         uses: azure/setup-helm@v3
         with:
           version: v3.13.0
 
-      # Add your kubectl/kubeconfig setup and helm upgrade here
-      # - name: Set up kubeconfig
-      #   run: echo "${{ secrets.KUBECONFIG }}" | base64 -d > kubeconfig
-      
-      # - name: Deploy with Helm
-      #   run: |
-      #     helm upgrade --install log-ingestion-service ./charts \
-      #       --namespace ai-monitoring \
-      #       -f charts/values.yaml
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'v1.28.0'
 
-      - name: Deployment placeholder
-        run: echo "Deploy to Kubernetes using image tag from values.yaml"
+      - name: Get AKS credentials
+        run: |
+          az aks get-credentials \
+            --resource-group ${{ secrets.AKS_RESOURCE_GROUP }} \
+            --name ${{ secrets.AKS_CLUSTER_NAME }} \
+            --overwrite-existing
+
+      - name: Create namespace if not exists
+        run: |
+          kubectl create namespace ai-monitoring --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Ensure ai-monitoring-secrets exists
+        run: |
+          if ! kubectl get secret ai-monitoring-secrets -n ai-monitoring 2>/dev/null; then
+            echo "::error::Secret ai-monitoring-secrets not found. Run install-dependencies.sh first (from ai-monitoring-alert-service):"
+            echo "  DB_PASSWORD='<pwd>' JWT_SECRET='<jwt>' ./deployments/install-dependencies.sh"
+            exit 1
+          fi
+          echo "Secret ai-monitoring-secrets exists."
+
+      - name: Clear stuck Helm release (if any)
+        run: |
+          if helm list -n ai-monitoring 2>/dev/null | grep -q auth-service; then
+            echo "Clearing any pending Helm operation..."
+            helm rollback auth-service -n ai-monitoring 2>/dev/null || true
+            sleep 5
+          fi
+
+      - name: Deploy with Helm
+        run: |
+          helm upgrade --install auth-service ./charts \
+            --namespace ai-monitoring \
+            --create-namespace \
+            -f charts/values.yaml
+
+      - name: Verify deployment
+        run: |
+          echo "Checking deployment status..."
+          kubectl rollout status deployment/auth-service -n ai-monitoring --timeout=2m
+          echo ""
+          echo "Pods:"
+          kubectl get pods -n ai-monitoring -l app.kubernetes.io/name=auth-service -o wide
+          echo ""
+          echo "Services:"
+          kubectl get svc -n ai-monitoring -l app.kubernetes.io/name=auth-service
+
+      - name: Debug pod (on failure)
+        if: failure()
+        run: |
+          echo "=== Pod status ==="
+          kubectl get pods -n ai-monitoring -l app.kubernetes.io/name=auth-service -o wide
+          echo ""
+          echo "=== Pod description ==="
+          kubectl describe pods -n ai-monitoring -l app.kubernetes.io/name=auth-service
+          echo ""
+          echo "=== Pod logs (if any) ==="
+          kubectl logs -n ai-monitoring -l app.kubernetes.io/name=auth-service --tail=100 --all-containers=true 2>/dev/null || true
 
   helm-lint:
     runs-on: ubuntu-latest
