@@ -1,6 +1,9 @@
 # Multi-stage build for Auth Service
 FROM maven:3.9-eclipse-temurin-17-alpine AS build
 
+# Update Alpine packages to fix CVEs (libpng, gnutls, etc.)
+RUN apk update && apk upgrade
+
 WORKDIR /app
 
 # Copy pom.xml, suppression file, and download dependencies (cached layer)
@@ -14,6 +17,9 @@ RUN mvn clean package -DskipTests
 
 # Runtime stage
 FROM eclipse-temurin:17-jre-alpine
+
+# Update Alpine packages to fix CVEs (libpng, gnutls, etc.)
+RUN apk update && apk upgrade
 
 WORKDIR /app
 
