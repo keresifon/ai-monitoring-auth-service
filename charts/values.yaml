@@ -68,3 +68,16 @@ readinessProbe:
   periodSeconds: 10
   timeoutSeconds: 5
   failureThreshold: 6
+
+openshift:
+  enabled: false
+  route:
+    enabled: true
+    host: ""
+    annotations:
+      haproxy.router.openshift.io/timeout: 60s
+    tls:
+      enabled: true
+      termination: edge
+      insecureEdgeTerminationPolicy: Redirect
+      destinationCACertificate: ""
