@@ -33,7 +33,7 @@ env:
   SPRING_PROFILES_ACTIVE: kubernetes
 
 database:
-  host: postgres
+  host: postgres-hl
   port: 5432
   name: ai_monitoring
   schema: auth_service
