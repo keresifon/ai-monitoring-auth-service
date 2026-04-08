@@ -8,7 +8,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.13</version>
+        <version>3.5.12</version>
         <relativePath/>
     </parent>
 
@@ -20,12 +20,11 @@
 
     <properties>
         <java.version>17</java.version>
+        <!-- Align with Spring Boot 3.5.12; GHSA-72hv-8253-57qq fixed in 2.21.1 (2.19.x line) -->
+        <jackson-bom.version>2.21.1</jackson-bom.version>
         <jjwt.version>0.12.3</jjwt.version>
         <commons-lang3.version>3.18.0</commons-lang3.version>
         <log4j.version>2.25.0</log4j.version>
-        <netty.version>4.1.131.Final</netty.version>
-        <logback.version>1.5.25</logback.version>
-        <tomcat.version>10.1.52</tomcat.version>
         <sonar.organization>keresifon</sonar.organization>
         <sonar.projectKey>keresifon_ai-monitoring-auth-service</sonar.projectKey>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
@@ -58,14 +57,6 @@
                 <groupId>org.apache.logging.log4j</groupId>
                 <artifactId>log4j-bom</artifactId>
                 <version>${log4j.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <!-- Override netty to fix CVE-2025-55163, CVE-2025-24970, CVE-2025-58057, CVE-2025-67735, CVE-2025-25193, CVE-2025-58056 -->
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-bom</artifactId>
-                <version>${netty.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>

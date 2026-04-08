@@ -65,8 +65,10 @@ public class SecurityConfig {
                 .toList();
         configuration.setAllowedOrigins(origins);
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        // Restrict allowed headers to specific ones instead of wildcard for better security
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept", "Origin"));
+        // Allow all request headers so browser preflight matches requests that include gateway-forwarded
+        // headers (e.g. X-XSRF-TOKEN). A narrow list caused 403 on POST /api/auth/register when those
+        // headers were not explicitly listed.
+        configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
         // Set max age to reduce preflight requests
         configuration.setMaxAge(3600L);
